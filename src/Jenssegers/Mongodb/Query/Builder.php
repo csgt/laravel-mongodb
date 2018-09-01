@@ -1,19 +1,18 @@
 <?php
-
 namespace Jenssegers\Mongodb\Query;
 
 use Closure;
 use DateTime;
-use Illuminate\Database\Query\Builder as BaseBuilder;
-use Illuminate\Database\Query\Expression;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Str;
-use Jenssegers\Mongodb\Connection;
 use MongoCollection;
-use MongoDB\BSON\ObjectID;
 use MongoDB\BSON\Regex;
+use MongoDB\BSON\ObjectID;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 use MongoDB\BSON\UTCDateTime;
+use Illuminate\Support\Collection;
+use Jenssegers\Mongodb\Connection;
+use Illuminate\Database\Query\Expression;
+use Illuminate\Database\Query\Builder as BaseBuilder;
 
 class Builder extends BaseBuilder
 {
@@ -113,12 +112,12 @@ class Builder extends BaseBuilder
      * @var array
      */
     protected $conversion = [
-        '=' => '=',
+        '='  => '=',
         '!=' => '$ne',
         '<>' => '$ne',
-        '<' => '$lt',
+        '<'  => '$lt',
         '<=' => '$lte',
-        '>' => '$gt',
+        '>'  => '$gt',
         '>=' => '$gte',
     ];
 
@@ -134,9 +133,9 @@ class Builder extends BaseBuilder
      */
     public function __construct(Connection $connection, Processor $processor)
     {
-        $this->grammar = new Grammar;
-        $this->connection = $connection;
-        $this->processor = $processor;
+        $this->grammar        = new Grammar;
+        $this->connection     = $connection;
+        $this->processor      = $processor;
         $this->useCollections = $this->shouldUseCollections();
     }
 
@@ -150,6 +149,7 @@ class Builder extends BaseBuilder
         if (function_exists('app')) {
             $version = app()->version();
             $version = filter_var(explode(')', $version)[0], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION); // lumen
+
             return version_compare($version, '5.3', '>=');
         }
 
@@ -236,7 +236,7 @@ class Builder extends BaseBuilder
 
         // Use MongoDB's aggregation framework when using grouping or aggregation functions.
         if ($this->groups || $this->aggregate || $this->paginating) {
-            $group = [];
+            $group   = [];
             $unwinds = [];
 
             // Add grouping columns to the $group part of the aggregation pipeline.
@@ -267,7 +267,7 @@ class Builder extends BaseBuilder
                     // column: subarray.price => {$unwind: '$subarray'}
                     if (count($splitColumns = explode('.*.', $column)) == 2) {
                         $unwinds[] = $splitColumns[0];
-                        $column = implode('.', $splitColumns);
+                        $column    = implode('.', $splitColumns);
                     }
 
                     // Translate count into sum.
@@ -335,6 +335,7 @@ class Builder extends BaseBuilder
             $results = iterator_to_array($this->collection->aggregate($pipeline, $options));
 
             // Return results
+
             return $this->useCollections ? new Collection($results) : $results;
         } // Distinct query
         elseif ($this->distinct) {
@@ -395,6 +396,7 @@ class Builder extends BaseBuilder
 
             // Return results as an array with numeric keys
             $results = iterator_to_array($cursor, false);
+
             return $this->useCollections ? new Collection($results) : $results;
         }
     }
@@ -409,13 +411,13 @@ class Builder extends BaseBuilder
         $key = [
             'connection' => $this->collection->getDatabaseName(),
             'collection' => $this->collection->getCollectionName(),
-            'wheres' => $this->wheres,
-            'columns' => $this->columns,
-            'groups' => $this->groups,
-            'orders' => $this->orders,
-            'offset' => $this->offset,
-            'limit' => $this->limit,
-            'aggregate' => $this->aggregate,
+            'wheres'     => $this->wheres,
+            'columns'    => $this->columns,
+            'groups'     => $this->groups,
+            'orders'     => $this->orders,
+            'offset'     => $this->offset,
+            'limit'      => $this->limit,
+            'aggregate'  => $this->aggregate,
         ];
 
         return md5(serialize(array_values($key)));
@@ -442,8 +444,8 @@ class Builder extends BaseBuilder
         // Once we have executed the query, we will reset the aggregate property so
         // that more select queries can be executed against the database without
         // the aggregate value getting in the way when the grammar builds it.
-        $this->aggregate = null;
-        $this->columns = $previousColumns;
+        $this->aggregate          = null;
+        $this->columns            = $previousColumns;
         $this->bindings['select'] = $previousSelectBindings;
 
         if (isset($results[0])) {
@@ -574,6 +576,7 @@ class Builder extends BaseBuilder
             }
 
             // Return id
+
             return $sequence == '_id' ? $result->getInsertedId() : $values[$sequence];
         }
     }
@@ -653,11 +656,13 @@ class Builder extends BaseBuilder
         if ($key == '_id') {
             $results = $results->map(function ($item) {
                 $item['_id'] = (string) $item['_id'];
+
                 return $item;
             });
         }
 
         $p = Arr::pluck($results, $column, $key);
+
         return $this->useCollections ? new Collection($p) : $p;
     }
 
@@ -731,6 +736,7 @@ class Builder extends BaseBuilder
         }
 
         // Quick access to the mongodb collection
+
         return $this->collection;
     }
 
@@ -893,14 +899,14 @@ class Builder extends BaseBuilder
 
                 // Operator conversions
                 $convert = [
-                    'regexp' => 'regex',
-                    'elemmatch' => 'elemMatch',
+                    'regexp'        => 'regex',
+                    'elemmatch'     => 'elemMatch',
                     'geointersects' => 'geoIntersects',
-                    'geowithin' => 'geoWithin',
-                    'nearsphere' => 'nearSphere',
-                    'maxdistance' => 'maxDistance',
-                    'centersphere' => 'centerSphere',
-                    'uniquedocs' => 'uniqueDocs',
+                    'geowithin'     => 'geoWithin',
+                    'nearsphere'    => 'nearSphere',
+                    'maxdistance'   => 'maxDistance',
+                    'centersphere'  => 'centerSphere',
+                    'uniquedocs'    => 'uniqueDocs',
                 ];
 
                 if (array_key_exists($where['operator'], $convert)) {
@@ -909,7 +915,7 @@ class Builder extends BaseBuilder
             }
 
             // Convert id's.
-            if (isset($where['column']) && ($where['column'] == '_id' || Str::endsWith($where['column'], '._id'))) {
+            if (isset($where['column'])) {
                 // Multiple values.
                 if (isset($where['values'])) {
                     foreach ($where['values'] as &$value) {
@@ -1010,10 +1016,10 @@ class Builder extends BaseBuilder
         elseif (in_array($operator, ['regexp', 'not regexp', 'regex', 'not regex'])) {
             // Automatically convert regular expression strings to Regex objects.
             if (!$value instanceof Regex) {
-                $e = explode('/', $value);
-                $flag = end($e);
+                $e      = explode('/', $value);
+                $flag   = end($e);
                 $regstr = substr($value, 1, -(strlen($flag) + 1));
-                $value = new Regex($regstr, $flag);
+                $value  = new Regex($regstr, $flag);
             }
 
             // For inverse regexp operations, we can just use the $not operator
@@ -1074,7 +1080,7 @@ class Builder extends BaseBuilder
     protected function compileWhereNull(array $where)
     {
         $where['operator'] = '=';
-        $where['value'] = null;
+        $where['value']    = null;
 
         return $this->compileWhereBasic($where);
     }
@@ -1086,7 +1092,7 @@ class Builder extends BaseBuilder
     protected function compileWhereNotNull(array $where)
     {
         $where['operator'] = '!=';
-        $where['value'] = null;
+        $where['value']    = null;
 
         return $this->compileWhereBasic($where);
     }
